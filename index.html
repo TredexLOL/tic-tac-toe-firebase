@@ -3,530 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Онлайн Крестики-Нолики</title>
+    <title>Крестики-нолики онлайн</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
-            background-color: #f5f5f5;
-        }
-        
-        h1 {
-            color: #333;
-        }
-        
-        .game-container {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            margin-top: 30px;
+            color: white;
         }
-        
-        .board {
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu {
+            display: block;
+        }
+
+        .menu.hidden {
+            display: none;
+        }
+
+        .game-area {
+            display: none;
+        }
+
+        .game-area.active {
+            display: block;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        input {
+            padding: 12px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+
+        .game-board {
             display: grid;
             grid-template-columns: repeat(3, 100px);
             grid-template-rows: repeat(3, 100px);
             gap: 5px;
-            margin: 20px 0;
+            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
-        
+
         .cell {
-            width: 100px;
-            height: 100px;
-            background-color: white;
-            border: 2px solid #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 48px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 10px;
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+
         .cell:hover {
-            background-color: #eee;
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
         }
-        
-        .status {
+
+        .cell:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .game-info {
             margin: 20px 0;
-            font-size: 24px;
+            font-size: 1.2em;
             font-weight: bold;
         }
-        
-        .controls {
-            margin: 20px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        button {
+
+        .status {
             padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            margin: 10px 0;
+            display: inline-block;
         }
-        
-        button:hover {
-            background-color: #45a049;
-        }
-        
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        
-        .link-container {
+
+        .room-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 15px;
             margin: 20px 0;
-            padding: 10px;
-            background-color: #e9e9e9;
-            border-radius: 4px;
-            word-break: break-all;
         }
-        
-        .player-info {
+
+        .link-share {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            word-break: break-all;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .link-share:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .players {
             display: flex;
             justify-content: space-around;
-            width: 100%;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
-        
+
         .player {
-            padding: 10px;
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 15px;
+            flex: 1;
+            margin: 0 5px;
         }
-        
-        .player-you {
-            background-color: #d4edda;
+
+        .player.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
-        
-        .player-opponent {
-            background-color: #f8d7da;
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
         }
-        
-        .hidden {
-            display: none;
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .winner-animation {
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
         }
     </style>
 </head>
 <body>
-    <h1>Онлайн Крестики-Нолики</h1>
-    
-    <div id="setup-screen" class="game-container">
-        <h2>Создать или присоединиться к игре</h2>
-        <div class="controls">
-            <button id="create-game-btn">Создать игру</button>
-            <div>или</div>
-            <input type="text" id="game-id-input" placeholder="Введите ID игры">
-            <button id="join-game-btn">Присоединиться</button>
-        </div>
-    </div>
-    
-    <div id="game-screen" class="game-container hidden">
-        <div class="player-info">
-            <div id="player-you" class="player player-you">
-                Вы: <span id="player-you-symbol"></span>
-            </div>
-            <div id="player-opponent" class="player player-opponent hidden">
-                Оппонент: <span id="player-opponent-symbol"></span>
+    <div class="container">
+        <h1>🎮 Крестики-нолики</h1>
+        
+        <!-- Главное меню -->
+        <div class="menu" id="menu">
+            <button onclick="createRoom()">Создать комнату</button>
+            <div class="input-group">
+                <input type="text" id="roomIdInput" placeholder="ID комнаты" />
+                <button onclick="joinRoom()">Присоединиться</button>
             </div>
         </div>
-        
-        <div class="link-container hidden" id="game-link-container">
-            Отправьте эту ссылку другу: <br>
-            <span id="game-link"></span>
-        </div>
-        
-        <div class="status" id="game-status">Ожидание подключения второго игрока...</div>
-        
-        <div class="board" id="game-board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
-        </div>
-        
-        <div class="controls">
-            <button id="restart-game-btn" disabled>Начать заново</button>
-            <button id="leave-game-btn">Покинуть игру</button>
+
+        <!-- Игровая область -->
+        <div class="game-area" id="gameArea">
+            <div class="room-info" id="roomInfo">
+                <div>Комната: <span id="currentRoomId"></span></div>
+                <div class="link-share" id="shareLink" onclick="copyLink()">
+                    Нажмите, чтобы скопировать ссылку
+                </div>
+            </div>
+
+            <div class="players">
+                <div class="player" id="player1">
+                    <div>Игрок 1 (X)</div>
+                    <div id="player1Status">Ожидание...</div>
+                </div>
+                <div class="player" id="player2">
+                    <div>Игрок 2 (O)</div>
+                    <div id="player2Status">Ожидание...</div>
+                </div>
+            </div>
+
+            <div class="game-info">
+                <div class="status" id="gameStatus">Ожидание игроков...</div>
+            </div>
+
+            <div class="game-board" id="gameBoard">
+                <button class="cell" onclick="makeMove(0)"></button>
+                <button class="cell" onclick="makeMove(1)"></button>
+                <button class="cell" onclick="makeMove(2)"></button>
+                <button class="cell" onclick="makeMove(3)"></button>
+                <button class="cell" onclick="makeMove(4)"></button>
+                <button class="cell" onclick="makeMove(5)"></button>
+                <button class="cell" onclick="makeMove(6)"></button>
+                <button class="cell" onclick="makeMove(7)"></button>
+                <button class="cell" onclick="makeMove(8)"></button>
+            </div>
+
+            <button onclick="resetGame()">Новая игра</button>
+            <button onclick="leaveRoom()">Покинуть комнату</button>
         </div>
     </div>
-    
+
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-database-compat.min.js"></script>
+
     <script>
-        // Ваша конфигурация Firebase
+        // ВАЖНО: Замените эту конфигурацию на вашу собственную из Firebase Console
         const firebaseConfig = {
-            apiKey: "AIzaSyBt6AOeGNXOvCsK3MSCA1SyLxjdYQ6nt9c",
-            authDomain: "tic-tac-toe-17ce4.firebaseapp.com",
-            databaseURL: "https://tic-tac-toe-17ce4-default-rtdb.firebaseio.com",
-            projectId: "tic-tac-toe-17ce4",
-            storageBucket: "tic-tac-toe-17ce4.appspot.com",
-            messagingSenderId: "496507676620",
-            appId: "1:496507676620:web:3d057acbcb1ccd6394df69"
+            apiKey: "ВАШ_API_KEY",
+            authDomain: "ВАШ_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://ВАШ_PROJECT_ID-default-rtdb.firebaseio.com/",
+            projectId: "ВАШ_PROJECT_ID",
+            storageBucket: "ВАШ_PROJECT_ID.appspot.com",
+            messagingSenderId: "ВАШ_SENDER_ID",
+            appId: "ВАШ_APP_ID"
         };
-        
+
         // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        
-        // Состояние игры
+
+        // Игровые переменные
+        let currentRoomId = null;
+        let playerId = null;
+        let playerNumber = null;
         let gameState = {
-            gameId: null,
-            playerId: null,
-            playerSymbol: null,
-            isHost: false,
-            currentTurn: null,
-            board: Array(9).fill(null),
-            gameOver: false,
+            board: Array(9).fill(''),
+            currentPlayer: 1,
+            players: {},
+            gameActive: false,
             winner: null
         };
-        
-        // DOM элементы
-        const setupScreen = document.getElementById('setup-screen');
-        const gameScreen = document.getElementById('game-screen');
-        const createGameBtn = document.getElementById('create-game-btn');
-        const joinGameBtn = document.getElementById('join-game-btn');
-        const gameIdInput = document.getElementById('game-id-input');
-        const gameLinkContainer = document.getElementById('game-link-container');
-        const gameLink = document.getElementById('game-link');
-        const gameStatus = document.getElementById('game-status');
-        const gameBoard = document.getElementById('game-board');
-        const restartGameBtn = document.getElementById('restart-game-btn');
-        const leaveGameBtn = document.getElementById('leave-game-btn');
-        const playerYouSymbol = document.getElementById('player-you-symbol');
-        const playerOpponent = document.getElementById('player-opponent');
-        const playerOpponentSymbol = document.getElementById('player-opponent-symbol');
-        
-        // Обработчики событий
-        createGameBtn.addEventListener('click', createGame);
-        joinGameBtn.addEventListener('click', joinGame);
-        leaveGameBtn.addEventListener('click', leaveGame);
-        restartGameBtn.addEventListener('click', restartGame);
-        
-        // Инициализация игрового поля
-        Array.from(gameBoard.children).forEach(cell => {
-            cell.addEventListener('click', () => handleCellClick(cell));
-        });
-        
-        // Создание новой игры
-        function createGame() {
-            gameState.isHost = true;
-            gameState.playerSymbol = 'X';
-            gameState.playerId = generateId();
-            gameState.gameId = generateId();
-            
-            // Создаем игру в Firebase
-            const gameRef = database.ref(`games/${gameState.gameId}`);
-            
-            const initialGameData = {
-                host: {
-                    id: gameState.playerId,
-                    symbol: 'X',
-                    ready: true
-                },
-                guest: {
-                    id: null,
-                    symbol: 'O',
-                    ready: false
-                },
-                currentTurn: 'X',
-                board: Array(9).fill(null),
-                gameOver: false,
-                winner: null,
-                createdAt: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            gameRef.set(initialGameData)
-                .then(() => {
-                    setupScreen.classList.add('hidden');
-                    gameScreen.classList.remove('hidden');
-                    gameLinkContainer.classList.remove('hidden');
-                    
-                    // Генерируем ссылку для приглашения
-                    const gameUrl = `${window.location.origin}${window.location.pathname}?gameId=${gameState.gameId}`;
-                    gameLink.textContent = gameUrl;
-                    
-                    playerYouSymbol.textContent = 'X';
-                    gameStatus.textContent = 'Ожидание подключения второго игрока...';
-                    
-                    // Слушаем изменения в игре
-                    setupGameListeners(gameRef);
-                    
-                    // Проверяем, есть ли ID игры в URL (для быстрого присоединения)
-                    checkUrlForGameId();
-                })
-                .catch(error => {
-                    console.error("Ошибка при создании игры:", error);
-                    alert("Не удалось создать игру. Пожалуйста, попробуйте снова.");
-                });
+
+        // Генерация уникального ID игрока
+        function generatePlayerId() {
+            return 'player_' + Math.random().toString(36).substr(2, 9);
         }
-        
-        // Присоединение к существующей игре
-        function joinGame() {
-            const gameId = gameIdInput.value.trim();
-            if (!gameId) {
-                alert("Пожалуйста, введите ID игры");
-                return;
-            }
-            
-            gameState.isHost = false;
-            gameState.playerSymbol = 'O';
-            gameState.playerId = generateId();
-            gameState.gameId = gameId;
-            
-            const gameRef = database.ref(`games/${gameState.gameId}`);
-            
-            // Проверяем существование игры
-            gameRef.once('value')
-                .then(snapshot => {
-                    if (!snapshot.exists()) {
-                        throw new Error("Игра не найдена");
-                    }
-                    
-                    const gameData = snapshot.val();
-                    
-                    // Проверяем, есть ли уже второй игрок
-                    if (gameData.guest.id) {
-                        throw new Error("В игре уже есть два игрока");
-                    }
-                    
-                    // Обновляем данные гостя
-                    return gameRef.update({
-                        'guest/id': gameState.playerId,
-                        'guest/ready': true
-                    });
-                })
-                .then(() => {
-                    setupScreen.classList.add('hidden');
-                    gameScreen.classList.remove('hidden');
-                    
-                    playerYouSymbol.textContent = 'O';
-                    playerOpponent.classList.remove('hidden');
-                    playerOpponentSymbol.textContent = 'X';
-                    gameStatus.textContent = 'Ожидание хода соперника...';
-                    
-                    // Слушаем изменения в игре
-                    setupGameListeners(gameRef);
-                })
-                .catch(error => {
-                    console.error("Ошибка при присоединении к игре:", error);
-                    alert(error.message || "Не удалось присоединиться к игре. Пожалуйста, проверьте ID игры и попробуйте снова.");
-                });
-        }
-        
-        // Настройка слушателей для изменений в игре
-        function setupGameListeners(gameRef) {
-            gameRef.on('value', snapshot => {
-                const gameData = snapshot.val();
-                
-                if (!gameData) {
-                    // Игра была удалена
-                    alert("Игра была завершена хостом");
-                    leaveGame();
-                    return;
-                }
-                
-                // Обновляем состояние игры
-                gameState.currentTurn = gameData.currentTurn;
-                gameState.board = gameData.board;
-                gameState.gameOver = gameData.gameOver;
-                gameState.winner = gameData.winner;
-                
-                // Обновляем UI
-                updateBoard();
-                updateGameStatus();
-                
-                // Показываем информацию о сопернике
-                if (!gameState.isHost && gameData.host.id) {
-                    playerOpponent.classList.remove('hidden');
-                    playerOpponentSymbol.textContent = 'X';
-                } else if (gameState.isHost && gameData.guest.id) {
-                    playerOpponent.classList.remove('hidden');
-                    playerOpponentSymbol.textContent = 'O';
-                }
-            });
-        }
-        
-        // Обработка клика по клетке
-        function handleCellClick(cell) {
-            if (gameState.gameOver) return;
-            
-            const index = parseInt(cell.getAttribute('data-index'));
-            
-            // Проверяем, можно ли сделать ход
-            if (gameState.board[index] !== null) return;
-            if (gameState.currentTurn !== gameState.playerSymbol) return;
-            
-            // Обновляем доску локально для быстрого отклика
-            gameState.board[index] = gameState.playerSymbol;
-            updateBoard();
-            
-            // Обновляем доску в Firebase
-            const gameRef = database.ref(`games/${gameState.gameId}`);
-            const updates = {
-                [`board/${index}`]: gameState.playerSymbol,
-                'currentTurn': gameState.playerSymbol === 'X' ? 'O' : 'X'
-            };
-            
-            // Проверяем, есть ли победитель
-            const winner = checkWinner(gameState.board);
-            if (winner) {
-                updates.gameOver = true;
-                updates.winner = winner;
-                restartGameBtn.disabled = false;
-            } else if (isBoardFull(gameState.board)) {
-                updates.gameOver = true;
-                updates.winner = 'draw';
-                restartGameBtn.disabled = false;
-            }
-            
-            gameRef.update(updates)
-                .catch(error => {
-                    console.error("Ошибка при обновлении игры:", error);
-                    alert("Не удалось сделать ход. Пожалуйста, попробуйте снова.");
-                });
-        }
-        
-        // Обновление игрового поля
-        function updateBoard() {
-            Array.from(gameBoard.children).forEach((cell, index) => {
-                cell.textContent = gameState.board[index] || '';
-            });
-        }
-        
-        // Обновление статуса игры
-        function updateGameStatus() {
-            if (gameState.gameOver) {
-                if (gameState.winner === 'draw') {
-                    gameStatus.textContent = 'Ничья!';
-                } else if (gameState.winner === gameState.playerSymbol) {
-                    gameStatus.textContent = 'Вы победили!';
-                } else {
-                    gameStatus.textContent = 'Вы проиграли!';
-                }
-                restartGameBtn.disabled = false;
-            } else {
-                if (gameState.currentTurn === gameState.playerSymbol) {
-                    gameStatus.textContent = 'Ваш ход!';
-                } else {
-                    gameStatus.textContent = 'Ожидание хода соперника...';
-                }
-            }
-        }
-        
-        // Проверка победителя
-        function checkWinner(board) {
-            const winningCombinations = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8], // горизонтали
-                [0, 3, 6], [1, 4, 7], [2, 5, 8], // вертикали
-                [0, 4, 8], [2, 4, 6]             // диагонали
-            ];
-            
-            for (const combo of winningCombinations) {
-                const [a, b, c] = combo;
-                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                    return board[a];
-                }
-            }
-            
-            return null;
-        }
-        
-        // Проверка на заполненность доски
-        function isBoardFull(board) {
-            return board.every(cell => cell !== null);
-        }
-        
-        // Перезапуск игры
-        function restartGame() {
-            const gameRef = database.ref(`games/${gameState.gameId}`);
-            
-            gameRef.update({
-                board: Array(9).fill(null),
-                currentTurn: 'X',
-                gameOver: false,
-                winner: null
-            })
-            .then(() => {
-                restartGameBtn.disabled = true;
-            })
-            .catch(error => {
-                console.error("Ошибка при перезапуске игры:", error);
-                alert("Не удалось перезапустить игру. Пожалуйста, попробуйте снова.");
-            });
-        }
-        
-        // Выход из игры
-        function leaveGame() {
-            if (gameState.gameId) {
-                const gameRef = database.ref(`games/${gameState.gameId}`);
-                
-                if (gameState.isHost) {
-                    // Хост удаляет игру полностью
-                    gameRef.remove()
-                        .catch(error => console.error("Ошибка при удалении игры:", error));
-                } else {
-                    // Гость просто удаляет себя из игры
-                    gameRef.update({
-                        'guest/id': null,
-                        'guest/ready': false
-                    })
-                    .catch(error => console.error("Ошибка при выходе из игры:", error));
-                }
-            }
-            
-            // Сброс состояния
-            gameState = {
-                gameId: null,
-                playerId: null,
-                playerSymbol: null,
-                isHost: false,
-                currentTurn: null,
-                board: Array(9).fill(null),
-                gameOver: false,
-                winner: null
-            };
-            
-            // Возврат к экрану настройки
-            gameScreen.classList.add('hidden');
-            setupScreen.classList.remove('hidden');
-            gameIdInput.value = '';
-            restartGameBtn.disabled = true;
-            playerOpponent.classList.add('hidden');
-        }
-        
-        // Проверка URL на наличие ID игры
-        function checkUrlForGameId() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const gameId = urlParams.get('gameId');
-            
-            if (gameId && !gameState.gameId) {
-                gameIdInput.value = gameId;
-            }
-        }
-        
-        // Генератор случайного ID
-        function generateId() {
-            return Math.random().toString(36).substr(2, 9);
-        }
-        
-        // Инициализация при загрузке страницы
-        checkUrlForGameId();
-    </script>
-</body>
-</html>
+
+        // Генерация ID комнаты
+        function generateRoomId() {
+            return Math
