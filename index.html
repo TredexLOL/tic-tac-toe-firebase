@@ -271,15 +271,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-database-compat.min.js"></script>
 
     <script>
-        // ВАЖНО: Замените эту конфигурацию на вашу собственную из Firebase Console
+        // Firebase конфигурация
         const firebaseConfig = {
-            apiKey: "ВАШ_API_KEY",
-            authDomain: "ВАШ_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://ВАШ_PROJECT_ID-default-rtdb.firebaseio.com/",
-            projectId: "ВАШ_PROJECT_ID",
-            storageBucket: "ВАШ_PROJECT_ID.appspot.com",
-            messagingSenderId: "ВАШ_SENDER_ID",
-            appId: "ВАШ_APP_ID"
+            apiKey: "AIzaSyBXdM7JTDQGFGkMOJtOVzdUOkGYF7ofZu8",
+            authDomain: "tic-tac-toe2-21b3e.firebaseapp.com",
+            databaseURL: "https://tic-tac-toe2-21b3e-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tic-tac-toe2-21b3e",
+            storageBucket: "tic-tac-toe2-21b3e.firebasestorage.app",
+            messagingSenderId: "1090161542863",
+            appId: "1:1090161542863:web:960853f9c60d6451a419ba"
         };
 
         // Инициализация Firebase
@@ -305,4 +305,280 @@
 
         // Генерация ID комнаты
         function generateRoomId() {
-            return Math
+            return Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+
+        // Создание комнаты
+        async function createRoom() {
+            try {
+                currentRoomId = generateRoomId();
+                playerId = generatePlayerId();
+                playerNumber = 1;
+
+                const roomData = {
+                    board: Array(9).fill(''),
+                    currentPlayer: 1,
+                    players: {
+                        [playerId]: {
+                            playerNumber: 1,
+                            symbol: 'X',
+                            connected: true
+                        }
+                    },
+                    gameActive: false,
+                    winner: null,
+                    createdAt: Date.now()
+                };
+
+                await database.ref('rooms/' + currentRoomId).set(roomData);
+                joinGameRoom();
+            } catch (error) {
+                console.error('Ошибка создания комнаты:', error);
+                alert('Ошибка создания комнаты');
+            }
+        }
+
+        // Присоединение к комнате
+        async function joinRoom() {
+            const roomId = document.getElementById('roomIdInput').value.trim().toUpperCase();
+            if (!roomId) {
+                alert('Введите ID комнаты');
+                return;
+            }
+
+            try {
+                const roomSnapshot = await database.ref('rooms/' + roomId).once('value');
+                const roomData = roomSnapshot.val();
+
+                if (!roomData) {
+                    alert('Комната не найдена');
+                    return;
+                }
+
+                const playerCount = Object.keys(roomData.players || {}).length;
+                if (playerCount >= 2) {
+                    alert('Комната полная');
+                    return;
+                }
+
+                currentRoomId = roomId;
+                playerId = generatePlayerId();
+                playerNumber = 2;
+
+                await database.ref(`rooms/${currentRoomId}/players/${playerId}`).set({
+                    playerNumber: 2,
+                    symbol: 'O',
+                    connected: true
+                });
+
+                await database.ref(`rooms/${currentRoomId}/gameActive`).set(true);
+                joinGameRoom();
+            } catch (error) {
+                console.error('Ошибка присоединения к комнате:', error);
+                alert('Ошибка присоединения к комнате');
+            }
+        }
+
+        // Переход в игровую комнату
+        function joinGameRoom() {
+            document.getElementById('menu').classList.add('hidden');
+            document.getElementById('gameArea').classList.add('active');
+            document.getElementById('currentRoomId').textContent = currentRoomId;
+            
+            const shareUrl = window.location.origin + window.location.pathname + '?room=' + currentRoomId;
+            document.getElementById('shareLink').textContent = shareUrl;
+
+            // Подписка на изменения в комнате
+            database.ref('rooms/' + currentRoomId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    updateGameState(data);
+                }
+            });
+        }
+
+        // Обновление состояния игры
+        function updateGameState(data) {
+            gameState = data;
+            
+            // Обновление доски
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                cell.textContent = gameState.board[index];
+                cell.disabled = gameState.board[index] !== '' || !gameState.gameActive;
+            });
+
+            // Обновление информации об игроках
+            const players = Object.values(gameState.players || {});
+            const player1 = players.find(p => p.playerNumber === 1);
+            const player2 = players.find(p => p.playerNumber === 2);
+
+            document.getElementById('player1Status').textContent = player1 && player1.connected ? 'Подключен' : 'Ожидание...';
+            document.getElementById('player2Status').textContent = player2 && player2.connected ? 'Подключен' : 'Ожидание...';
+
+            // Активный игрок
+            document.getElementById('player1').classList.toggle('active', gameState.currentPlayer === 1);
+            document.getElementById('player2').classList.toggle('active', gameState.currentPlayer === 2);
+
+            // Статус игры
+            let statusText = '';
+            if (gameState.winner) {
+                if (gameState.winner === 'draw') {
+                    statusText = 'Ничья!';
+                } else {
+                    const winnerSymbol = gameState.winner === 1 ? 'X' : 'O';
+                    statusText = `Победил игрок ${gameState.winner} (${winnerSymbol})!`;
+                    document.getElementById('gameBoard').classList.add('winner-animation');
+                }
+            } else if (!gameState.gameActive) {
+                statusText = 'Ожидание игроков...';
+            } else if (gameState.currentPlayer === playerNumber) {
+                statusText = 'Ваш ход!';
+            } else {
+                statusText = 'Ход противника...';
+            }
+
+            document.getElementById('gameStatus').textContent = statusText;
+
+            // Блокировка хода
+            const canMove = gameState.gameActive && 
+                           gameState.currentPlayer === playerNumber && 
+                           !gameState.winner;
+            
+            cells.forEach((cell, index) => {
+                if (gameState.board[index] === '') {
+                    cell.disabled = !canMove;
+                }
+            });
+        }
+
+        // Совершение хода
+        async function makeMove(index) {
+            if (!gameState.gameActive || 
+                gameState.currentPlayer !== playerNumber || 
+                gameState.board[index] !== '' || 
+                gameState.winner) {
+                return;
+            }
+
+            try {
+                const newBoard = [...gameState.board];
+                newBoard[index] = playerNumber === 1 ? 'X' : 'O';
+
+                const winner = checkWinner(newBoard);
+                const nextPlayer = winner ? gameState.currentPlayer : (gameState.currentPlayer === 1 ? 2 : 1);
+
+                await database.ref(`rooms/${currentRoomId}`).update({
+                    board: newBoard,
+                    currentPlayer: nextPlayer,
+                    winner: winner
+                });
+            } catch (error) {
+                console.error('Ошибка совершения хода:', error);
+            }
+        }
+
+        // Проверка победителя
+        function checkWinner(board) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // горизонтали
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // вертикали
+                [0, 4, 8], [2, 4, 6] // диагонали
+            ];
+
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return board[a] === 'X' ? 1 : 2;
+                }
+            }
+
+            // Проверка на ничью
+            if (board.every(cell => cell !== '')) {
+                return 'draw';
+            }
+
+            return null;
+        }
+
+        // Сброс игры
+        async function resetGame() {
+            if (!currentRoomId) return;
+
+            try {
+                await database.ref(`rooms/${currentRoomId}`).update({
+                    board: Array(9).fill(''),
+                    currentPlayer: 1,
+                    winner: null,
+                    gameActive: Object.keys(gameState.players || {}).length >= 2
+                });
+
+                document.getElementById('gameBoard').classList.remove('winner-animation');
+            } catch (error) {
+                console.error('Ошибка сброса игры:', error);
+            }
+        }
+
+        // Покинуть комнату
+        async function leaveRoom() {
+            if (currentRoomId && playerId) {
+                try {
+                    await database.ref(`rooms/${currentRoomId}/players/${playerId}`).remove();
+                    
+                    // Проверяем, остались ли игроки
+                    const roomSnapshot = await database.ref(`rooms/${currentRoomId}/players`).once('value');
+                    const remainingPlayers = roomSnapshot.val();
+                    
+                    if (!remainingPlayers || Object.keys(remainingPlayers).length === 0) {
+                        // Удаляем комнату, если никого не осталось
+                        await database.ref(`rooms/${currentRoomId}`).remove();
+                    }
+                } catch (error) {
+                    console.error('Ошибка при покидании комнаты:', error);
+                }
+            }
+
+            // Отписка от обновлений
+            if (currentRoomId) {
+                database.ref('rooms/' + currentRoomId).off();
+            }
+
+            currentRoomId = null;
+            playerId = null;
+            playerNumber = null;
+
+            document.getElementById('gameArea').classList.remove('active');
+            document.getElementById('menu').classList.remove('hidden');
+            document.getElementById('roomIdInput').value = '';
+        }
+
+        // Копирование ссылки
+        function copyLink() {
+            const link = document.getElementById('shareLink').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                const originalText = document.getElementById('shareLink').textContent;
+                document.getElementById('shareLink').textContent = 'Ссылка скопирована!';
+                setTimeout(() => {
+                    document.getElementById('shareLink').textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // Обработка параметров URL
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomParam = urlParams.get('room');
+            if (roomParam) {
+                document.getElementById('roomIdInput').value = roomParam;
+            }
+        });
+
+        // Очистка при закрытии страницы
+        window.addEventListener('beforeunload', () => {
+            if (currentRoomId && playerId) {
+                database.ref(`rooms/${currentRoomId}/players/${playerId}/connected`).set(false);
+            }
+        });
+    </script>
+</body>
+</html>
